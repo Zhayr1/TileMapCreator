@@ -1,6 +1,6 @@
 # TileMapCreator
-Un creador de niveles 2d hecho con java y las librerias slick2d para otro juego de plataformas que estoy desarollando
-<----------------------------------------------------------->
+Un creador de niveles 2d hecho con java y las librerias slick2d para otro juego de plataformas que estoy desarollando       
+<---------------------------------------------------------------------------------------------------------------------------------->
 Guia de inicio
 F1 - Ayuda
 F5 - Guardar Mapa
@@ -23,4 +23,4 @@ Y luego dar click en el boton OK
 
 los numeros del teclado numerico 4 y 6 incrementan y decrementan el tamaño horizontal del bloque que se creara
 y los numeros del teclado numerico 2 y 8 incrementan el tamaño vertical del bloque que se creara
-<----------------------------------------------------------->
+<---------------------------------------------------------------------------------------------------------------------------------->
