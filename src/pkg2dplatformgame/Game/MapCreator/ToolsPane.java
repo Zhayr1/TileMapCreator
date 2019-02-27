@@ -33,9 +33,10 @@ public class ToolsPane {
     private int[] itemsNames;    
     private List<Item> items;   
     private String item;
+    private int bz;
     
     
-    public ToolsPane(float x,float y,float width,float height,String img1_src, String img2_src) throws SlickException{
+    public ToolsPane(float x,float y,float width,float height,int block_size,String img1_src, String img2_src) throws SlickException{
         itemsPane = new Image(img1_src);
         optionsPane = new Image(img2_src);
         this.x = x;
@@ -47,6 +48,7 @@ public class ToolsPane {
         item = "";
         this.initStrings();
         this.initItemsList();
+        bz = block_size;
     }
     public void draw(Graphics g){
         switch(selectedPane){
@@ -150,12 +152,12 @@ public class ToolsPane {
 
         for (int i = 0; i < 5; i++) {
             items.add(new Item( (int)(editFieldTransitionPaneled + (SCREEN_X - PANEL_WIDTH +10)), (i+1) * 100 + 20,
-                PANEL_WIDTH * 0.3f, PANEL_WIDTH * 0.3f, itemsNames[i], imagesDirs[i]));
+                PANEL_WIDTH * 0.3f, PANEL_WIDTH * 0.3f, itemsNames[i],bz, imagesDirs[i]));
             
         }
         for (int i = 0; i < 5; i++) {
             items.add(new Item( (int)(editFieldTransitionPaneled + (SCREEN_X - PANEL_WIDTH +100)), (i+1) * 100 + 20,
-                PANEL_WIDTH * 0.3f, PANEL_WIDTH * 0.3f, itemsNames[i+5], imagesDirs[i+5]));
+                PANEL_WIDTH * 0.3f, PANEL_WIDTH * 0.3f, itemsNames[i+5],bz, imagesDirs[i+5]));
         }
     }    
     private void initStrings(){

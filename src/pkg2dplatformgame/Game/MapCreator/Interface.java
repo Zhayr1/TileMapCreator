@@ -10,24 +10,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.newdawn.slick.BasicGame;
+import javax.swing.JOptionPane;
 import org.newdawn.slick.Color;
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
+import org.newdawn.slick.Image;
 import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.TrueTypeFont;
 import org.newdawn.slick.gui.TextField;
+import org.newdawn.slick.state.BasicGameState;
+import org.newdawn.slick.state.StateBasedGame;
 
 /**
  *
  * @author Jesus
  */
-public class Interface extends BasicGame{
+public class Interface extends BasicGameState{
     
     public static final int SCREEN_X = 1000;
     public static final int SCREEN_Y = 600;
     public static final int PANEL_WIDTH = 200;
+    public static final int ID = 0;
     public static final int EDIT_FIELD = (SCREEN_X - PANEL_WIDTH - 20);
     public int BLOCK_SIZE = 60;
     public int COLSH = Math.round((SCREEN_X - PANEL_WIDTH)/BLOCK_SIZE);
@@ -53,15 +57,16 @@ public class Interface extends BasicGame{
     
     private ToolsPane toolsPane;
     private List<Item> mapItemsList;
+    private List<Item> itemList;
     private int selectedItem;
     private boolean presionadoIzq,presionadoDer;
     private TextField blockSizeTextField;
     private float editField;
-    private boolean drawGrid;
+    private boolean drawGrid,drawHelp;
+    private int itemw,itemh;
+    private String aux;
+    private Image HelpText,OkButton;
     
-    public Interface(String a){
-        super(a);
-    }
     
     public void setBlockSize(int bz){
         BLOCK_SIZE = bz;
@@ -71,7 +76,7 @@ public class Interface extends BasicGame{
     }
 
     @Override
-    public void init(GameContainer gc) throws SlickException {
+    public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
         mapItemsList = new ArrayList();
         presionadoIzq = false;
         presionadoDer = false;
@@ -80,16 +85,20 @@ public class Interface extends BasicGame{
 	TrueTypeFont font = new TrueTypeFont(awtFont, false);
         blockSizeTextField = new TextField(gc, font, SCREEN_X - PANEL_WIDTH, 50, 100, 30);
         editField = 0;
-        drawGrid = true;
+        drawGrid = false;
+        drawHelp = true;
+        itemw = itemh = 1;
+        HelpText = new Image("Assets/HelpText.png");
+        OkButton = new Image("Assets/OkButton.png");
         editFieldTransition = editField * SCREEN_X;
         editFieldTransitionPaneled = (editField * EDIT_FIELD);
         toolsPane = new ToolsPane((editFieldTransitionPaneled )+(SCREEN_X - PANEL_WIDTH - 20),
-                                   0, PANEL_WIDTH + 20, SCREEN_Y, "Assets/ItemsPane.png", "Assets/OptionsPane.png");
-
+        0, PANEL_WIDTH + 20, SCREEN_Y,BLOCK_SIZE, "Assets/ItemsPane.png", "Assets/OptionsPane.png");
+        itemList = toolsPane.getItemsList();
     }
 
     @Override
-    public void update(GameContainer gc, int i) throws SlickException {
+    public void update(GameContainer gc, StateBasedGame sbg, int i) throws SlickException {
         MouseCheck.updateMousePosition(SCREEN_Y);
         this.updateTransitionPosition();
         this.updateToolsPanePosition();
@@ -100,26 +109,32 @@ public class Interface extends BasicGame{
     }
 
     @Override
-    public void render(GameContainer gc, Graphics g) throws SlickException {
+    public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException {
         g.translate( -(editFieldTransitionPaneled), 0);
         g.setColor(Color.white);
-        g.drawString("EDTP: "+editFieldTransitionPaneled+"\n"+editField+"\nMx: "+MouseCheck.getX()+"\nMy: "+MouseCheck.getY(), editFieldTransitionPaneled, 20);
         this.drawLines(g);
         this.drawMapItems(g);
+        itemList.get(selectedItem).render(g,(int)MouseCheck.getX(),(int)MouseCheck.getY(),itemw,itemh,BLOCK_SIZE);
         g.setColor(Color.white);
         this.drawPanel(g);
         blockSizeTextField.render(gc, g);
-        g.setColor(Color.lightGray);
-        g.fillRect(SCREEN_X - PANEL_WIDTH + 120 + (editFieldTransitionPaneled), 50, 50, 30);
+        OkButton.draw(SCREEN_X - PANEL_WIDTH + 120 + (editFieldTransitionPaneled),50,50,30);
+        if(drawHelp){
+            HelpText.draw(0, 0);
+        }else{
+            g.setColor(Color.white);
+            g.drawString("EDTP: "+editFieldTransitionPaneled+"\n"+editField+"\nMx: "+MouseCheck.getX()+"\nMy: "+MouseCheck.getY(), editFieldTransitionPaneled, 20);
+        }
     }
     @Override
     public void mouseClicked(int click, int i1, int i2, int i3) {
         if(click == 0){
             toolsPane.checkSelectedItems();
+            this.checkButtonsClick();
             try {
                 this.checkPlacedItem(selectedItem);
             } catch (SlickException ex) {
-                Logger.getLogger(Interface.class.getName()).log(Level.SEVERE, null, ex);
+                System.out.println("Error: "+ex);
             }
         }
         if(click == 1){
@@ -151,14 +166,6 @@ public class Interface extends BasicGame{
             case Input.KEY_LALT:
                 presionadoDer = true;
                 break;
-            case Input.KEY_ENTER:
-                if(blockSizeTextField.getText() != ""){
-                    try{
-                        this.setBlockSize(Integer.valueOf(blockSizeTextField.getText()));
-                    }catch(Exception e){
-                    }
-                }
-                break;
             case Input.KEY_RIGHT:
                 editField++;
                 break;
@@ -168,16 +175,57 @@ public class Interface extends BasicGame{
             case Input.KEY_F8:
                 drawGrid = !drawGrid;
                 break;
+            case Input.KEY_F1:
+                drawGrid = !drawGrid;
+                drawHelp = !drawHelp;
+                break;
             case Input.KEY_F5:
-                SaveMap.createMapFile("TestMap.txt", mapItemsList, BLOCK_SIZE);
+                aux = JOptionPane.showInputDialog("Ingrese el nombre para guardar el mapa");
+                if(!aux.contains(".tmc")){
+                    aux += ".tmc";
+                }
+                SaveMap.createMapFile(aux, mapItemsList, BLOCK_SIZE);
                 break;
             case Input.KEY_F6:
+                aux = JOptionPane.showInputDialog("Ingrese el nombre del mapa que desea cargar");
+                if(!aux.contains(".tmc")){
+                    aux += ".tmc";
+                }
                 try {
-                    mapItemsList = LoadMap.LoadMapFile("TestMap.txt", toolsPane.getImagesDir());
+                    mapItemsList = LoadMap.LoadMapFile(aux, toolsPane.getImagesDir());
                 } catch (SlickException ex) {
                     Logger.getLogger(Interface.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 break;
+            case Input.KEY_NUMPAD4:
+                System.out.println("itemw"+itemw);
+                if(itemw < 2){
+                    itemw = 1;
+                }else{
+                    itemw --;
+                }
+                break;
+            case Input.KEY_NUMPAD6:
+                if(itemw > Math.floor(EDIT_FIELD/BLOCK_SIZE)){
+                    itemw = (int)Math.floor(EDIT_FIELD/BLOCK_SIZE);
+                }else{
+                    itemw ++;
+                }
+                break;        
+            case Input.KEY_NUMPAD2:
+                if(itemh > SCREEN_Y/BLOCK_SIZE){
+                    itemh = SCREEN_Y/BLOCK_SIZE;
+                }else{
+                    itemh ++;
+                }
+                break;     
+            case Input.KEY_NUMPAD8:
+                if(itemh < 2){
+                    itemh = 1;
+                }else{
+                    itemh --;
+                }
+                break;         
         }
     }
     @Override
@@ -213,7 +261,8 @@ public class Interface extends BasicGame{
                         mapItemsList.remove(j);
                     }
                 }
-                mapItemsList.add(new Item(i * BLOCK_SIZE + (editFieldTransitionPaneled), 0 , BLOCK_SIZE,BLOCK_SIZE , id,toolsPane.getImagesDir()[id]));
+                mapItemsList.add(new Item(i * BLOCK_SIZE + (editFieldTransitionPaneled), 0 , itemw * BLOCK_SIZE
+                        ,itemh * BLOCK_SIZE , id,BLOCK_SIZE,toolsPane.getImagesDir()[id]));
             }
             for (int j = 0; j < COLSV; j++) {
                 if(MouseCheck.isMouseHere(i * BLOCK_SIZE ,j * BLOCK_SIZE , BLOCK_SIZE, BLOCK_SIZE)){
@@ -222,11 +271,25 @@ public class Interface extends BasicGame{
                             mapItemsList.remove(k);
                        }
                     }
-                    mapItemsList.add(new Item(i * BLOCK_SIZE + (editFieldTransitionPaneled), j * BLOCK_SIZE ,
-                                                BLOCK_SIZE,BLOCK_SIZE,id,toolsPane.getImagesDir()[id]));
+                    mapItemsList.add(new Item(i * BLOCK_SIZE + (editFieldTransitionPaneled), j * BLOCK_SIZE,
+                                                itemw * BLOCK_SIZE,itemh * BLOCK_SIZE ,id,BLOCK_SIZE,toolsPane.getImagesDir()[id]));
                 }
             }
         }
+    }
+    private void checkButtonsClick(){
+        if(MouseCheck.isMouseHere(SCREEN_X - PANEL_WIDTH + 120, 50, 50, 30)){
+                if(blockSizeTextField.getText() != ""){
+                    try{
+                        int auxi = Integer.valueOf(blockSizeTextField.getText());
+                        if(auxi != 0){
+                            this.setBlockSize(auxi);
+                        }
+                    }catch(Exception e){
+                        System.out.println("Error: "+e);
+                    }
+                }
+            }
     }
     private void removePlacedItem(){
         for (int i = 0; i < COLSH; i++) {
@@ -287,17 +350,16 @@ public class Interface extends BasicGame{
     private void drawPanel(Graphics g){
                 toolsPane.draw(g);
     }
-    private void showMapItemsNames(){
-        System.out.println("<=========================================>");
-        mapItemsList.forEach((mapItemsList1) -> {
-            System.out.println(mapItemsList1.toString());
-        });
-    }
     private void updateTransitionPosition(){
         editFieldTransition = editField * SCREEN_X;
         editFieldTransitionPaneled = editField * EDIT_FIELD;
     }
     private void updateToolsPanePosition(){
         toolsPane.updatePosition(editFieldTransitionPaneled + (SCREEN_X - PANEL_WIDTH - 20), 0);
+ 
+    }
+    @Override
+    public int getID() {
+        return ID;
     }
 }

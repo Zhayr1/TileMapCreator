@@ -31,7 +31,7 @@ public class LoadMap{
             }else{
                 String[] aux = items[i].split(",");
                 itList.add(new Item(Float.valueOf(aux[1]),Float.valueOf(aux[2]),blockSize,blockSize,
-                           Integer.valueOf(aux[0]),imagesDir[Integer.valueOf(aux[0])]));
+                           Integer.valueOf(aux[0]),blockSize,imagesDir[Integer.valueOf(aux[0])]));
             }
         }
                             //mapItemsList.add(new Item(i * BLOCK_SIZE + (editFieldTransitionPaneled), j * BLOCK_SIZE ,
